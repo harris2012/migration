@@ -1,0 +1,233 @@
+﻿<#@ template language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="Migration.Model" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#
+    if(this.Root != null)
+    {
+        switch (this.Root.NodeType)
+        {
+            case Migration.Model.NodeType.Class:
+                {
+                    var classNode = this.Root as ClassNode;
+                    if(classNode != null)
+                    {
+#>
+<#
+                        if(!string.IsNullOrEmpty(classNode.Summary))
+                        {
+#>
+
+/**
+ * @Description: <#=classNode.Summary#>
+*/
+<#
+                        }
+#>
+@XmlAccessorType(XmlAccessType.FIELD)
+<#=TemplateUtility.GetIndent(this.Indent)#>class <#=classNode.Name#><#=string.IsNullOrEmpty(classNode.BaseTypeName)?string.Empty : string.Concat(" extends ", classNode.BaseTypeName)#> {
+
+<#
+                        if(classNode.Items != null && classNode.Items.Count > 0)
+                        {
+                            var propertyNodes = classNode.Items.Where(v => v.NodeType == NodeType.Property && v.IsChecked).ToList();
+                            if(propertyNodes.Count > 0)
+                            {
+#>
+<#=TemplateUtility.GetIndent(this.Indent + 1)#>// region Properties
+
+<#
+                                foreach(var propertyNode in propertyNodes)
+                                {
+                                    var javaTemplate = new JavaTemplate();
+                                    javaTemplate.Root = propertyNode;
+                                    javaTemplate.Indent = 1;
+                                    var content = javaTemplate.TransformText();
+#><#=content#><#
+                                }
+#>
+<#=TemplateUtility.GetIndent(this.Indent + 1)#>// endregion
+
+<#
+                            }
+
+                            var fieldNodes = classNode.Items.Where(v => v.NodeType == NodeType.Field && v.IsChecked).ToList();
+                            if(fieldNodes.Count > 0)
+                            {
+#>
+<#=TemplateUtility.GetIndent(this.Indent + 1)#>// region Fields
+<#
+                                foreach(var fieldNode in fieldNodes)
+                                {
+                                    var javaTemplate = new JavaTemplate();
+                                    javaTemplate.Root = fieldNode;
+                                    javaTemplate.Indent = 1;
+                                    var content = javaTemplate.TransformText();
+#><#=content#><#
+                                }
+
+#>
+<#=TemplateUtility.GetIndent(this.Indent + 1)#>// endregion
+
+<#
+                            }
+
+                            var methodNodes = classNode.Items.Where(v => v.NodeType == NodeType.Method && v.IsChecked).ToList();
+                            if(methodNodes.Count > 0)
+                            {
+#>
+<#=TemplateUtility.GetIndent(this.Indent + 1)#>// region Methods
+<#
+                                foreach(var methodNode in methodNodes)
+                                {
+                                    var javaTemplate = new JavaTemplate();
+                                    javaTemplate.Root = methodNode;
+                                    javaTemplate.Indent = 1;
+                                    var content = javaTemplate.TransformText();
+#><#=content#><#
+                                }
+#>
+<#=TemplateUtility.GetIndent(this.Indent + 1)#>// endregion
+
+<#
+                            }
+                        }
+#>
+}
+<#
+                    }
+                }
+
+                break;
+            case Migration.Model.NodeType.Enum:
+#>enum <#=this.Root.Name#><#
+                break;
+            case Migration.Model.NodeType.Property:
+                {
+                    var propertyNode = this.Root as PropertyNode;
+                    if(propertyNode != null)
+                    {
+#>
+<#=TemplateUtility.GetIndent(this.Indent)#>@XmlElement(name = "<#=propertyNode.Name??string.Empty#>")
+<#=TemplateUtility.GetIndent(this.Indent)#>private <#=propertyNode.JavaTypeName??string.Empty#> <#=propertyNode.PropertyJavaName#>;<#=string.IsNullOrEmpty(propertyNode.Summary) ? string.Empty : string.Concat("// ", propertyNode.Summary)#>
+
+<#
+                        if(propertyNode != null && propertyNode.Items.Count >0)
+                        {
+                            var items = this.Root.Items.Where(v => v.IsChecked).ToList();
+                            foreach(var item in items)
+                            {
+                                var javaTemplate = new JavaTemplate();
+                                javaTemplate.Root = item;
+                                javaTemplate.Indent = this.Indent;
+                                var content = javaTemplate.TransformText();
+#><#=content#><#
+                            }
+                        }
+                    }
+                }
+
+                break;
+            case Migration.Model.NodeType.Field:
+                {
+                    var fieldNode = this.Root as FieldNode;
+                    if(fieldNode != null)
+                    {
+#>
+<#=TemplateUtility.GetIndent(this.Indent)#><#=fieldNode.JavaTypeName#> <#=fieldNode.Name#><#=string.IsNullOrEmpty(fieldNode.ConstValue) ? string.Empty : string.Concat(" = ", fieldNode.ConstValue)#>;<#=string.IsNullOrEmpty(fieldNode.Summary) ? string.Empty : string.Concat("// ", fieldNode.Summary)#>
+<#
+                    }
+                }
+
+                break;
+            case Migration.Model.NodeType.Method:
+                {
+                    var methodNode = this.Root as MethodNode;
+                    if(methodNode != null)
+                    {
+                        if(methodNode.IsGet)
+                        {
+#>
+<#=TemplateUtility.GetIndent(this.Indent)#>public <#=methodNode.ReturnJavaTypeName??string.Empty#> get<#=methodNode.PropertyName#>() {
+<#=TemplateUtility.GetIndent(this.Indent + 1)#>return <#=methodNode.PropertyJavaName#>;
+<#=TemplateUtility.GetIndent(this.Indent)#>}
+
+<#
+                        }
+                        else if(methodNode.IsSet)
+                        {
+#>
+<#=TemplateUtility.GetIndent(this.Indent)#>public void set<#=methodNode.PropertyName#>(<#=(methodNode.Parameters != null && methodNode.Parameters.Count > 0)?string.Join(", ", methodNode.Parameters.Select(v => string.Format("{0} {1}", v.JavaTypeName, v.Name))):string.Empty#>){
+<#=TemplateUtility.GetIndent(this.Indent + 1)#><#=methodNode.PropertyJavaName#> = value;
+<#=TemplateUtility.GetIndent(this.Indent)#>}
+
+<#
+                        }
+                        else
+                        {
+                            if(!string.IsNullOrEmpty(methodNode.Summary))
+                            {
+#>
+
+<#=TemplateUtility.GetIndent(this.Indent)#>/**
+<#=TemplateUtility.GetIndent(this.Indent)#> * <#=methodNode.Summary#>
+<#=TemplateUtility.GetIndent(this.Indent)#>*/
+<#
+                            }
+#>
+<#=TemplateUtility.GetIndent(this.Indent)#>public <#=methodNode.IsStatic?"static ":string.Empty#><#=methodNode.ReturnJavaTypeName??string.Empty#> <#=methodNode.Name#>(<#=(methodNode.Parameters != null && methodNode.Parameters.Count > 0)?string.Join(", ", methodNode.Parameters.Select(v => string.Format("{0} {1}", v.JavaTypeName, v.Name))):string.Empty#>);
+
+<#
+                        }
+                    }
+                }
+
+                break;
+            case Migration.Model.NodeType.Namespace:
+                {
+#>
+package <#=this.Root.Name??string.Empty#>;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+<#
+                    if(this.Root.Items != null && this.Root.Items.Count > 0)
+                    {
+                        var items = this.Root.Items.Where(v => v.IsChecked).ToList();
+                        foreach(var item in items)
+                        {
+                            var javaTemplate = new JavaTemplate();
+                            javaTemplate.Root = item;
+                            var content = javaTemplate.TransformText();
+#><#=content#><#
+                        }
+                    }
+                }
+
+                break;
+            case Migration.Model.NodeType.Root:
+                {
+                    if(this.Root.Items != null && this.Root.Items.Count > 0)
+                    {
+                        var items = this.Root.Items.Where(v => v.IsChecked).ToList();
+                        foreach(var item in items)
+                        {
+                            var javaTemplate = new JavaTemplate();
+                            javaTemplate.Root = item;
+                            var content = javaTemplate.TransformText();
+#><#=content#><#
+                        }
+                    }
+                }
+
+                break;
+            case Migration.Model.NodeType.None:
+            default:
+#>notsupport <#=this.Root.Name#><#
+                break;
+        }
+    }
+#>

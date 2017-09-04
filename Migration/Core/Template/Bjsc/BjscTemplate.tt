@@ -1,0 +1,128 @@
+﻿<#@ template language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="Migration.Model" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#
+    if(this.WithInclude)
+    {
+#>
+include 'BaijiCommonTypes.bjsc'
+include 'BaijiMobileCommonTypes.bjsc'
+
+<#
+    }
+#>
+<#
+    if(this.Root != null)
+    {
+            switch (this.Root.NodeType)
+            {
+                case Migration.Model.NodeType.Class:
+                    {
+                        var classNode = this.Root as ClassNode;
+                        if(classNode != null)
+                        {
+                            if(!string.IsNullOrEmpty(classNode.Summary))
+                            {
+#>
+/* <#=classNode.Summary#> */
+<#
+                            }
+#>
+class <#=this.Root.Name#>
+{
+<#
+                            if (classNode.Items != null && classNode.Items.Count > 0)
+                            {
+                                var propertyNodes = classNode.Items.Where(v => v.NodeType == Migration.Model.NodeType.Property).ToList();
+                                foreach (var propertyNode in propertyNodes)
+                                {
+                                    if(propertyNode.IsChecked)
+                                    {
+                                        var bjscTemplate = new BjscTemplate();
+                                        bjscTemplate.Root = propertyNode;
+                                        var content = bjscTemplate.TransformText();
+#><#=content#><#
+                                    }
+                                }
+                            }
+#>
+}
+<#
+                        }
+                    }
+
+                    break;
+                case Migration.Model.NodeType.None:
+                    break;
+                case Migration.Model.NodeType.Enum:
+                    break;
+                case Migration.Model.NodeType.Property:
+                    {
+                        var propertyNode = this.Root as PropertyNode;
+                        if(propertyNode != null)
+                        {
+                            if(!string.IsNullOrEmpty(propertyNode.Summary))
+                            {
+#>
+    /* <#=propertyNode.Summary#> */
+<#
+                            }
+#>
+    <#=propertyNode.BjscTypeName#> <#=propertyNode.Name#>;
+<#
+                        }
+                    }
+
+                    break;
+                case Migration.Model.NodeType.Field:
+                    break;
+                case Migration.Model.NodeType.Method:
+                    break;
+                case Migration.Model.NodeType.Namespace:
+                    {
+#>
+namespace java '<#=this.Root.Name??string.Empty#>'
+namespace csharp '<#=this.Root.Name??string.Empty#>'
+<#
+                        if(this.Root.Items != null && this.Root.Items.Count > 0)
+                        {
+                            foreach(var item in this.Root.Items)
+                            {
+                                if(item.IsChecked)
+                                {
+                                    var bjscTemplate = new BjscTemplate();
+                                    bjscTemplate.Root = item;
+                                    var content = bjscTemplate.TransformText();
+#><#=content#><#
+                                }
+                            }
+                        }
+                    }
+
+                    break;
+                case Migration.Model.NodeType.Root:
+                    {
+                        if(this.Root.Items != null && this.Root.Items.Count > 0)
+                        {
+                            foreach(var item in this.Root.Items)
+                            {
+                                if(item.IsChecked)
+                                {
+                                    var bjscTemplate = new BjscTemplate();
+                                    bjscTemplate.Root = item;
+                                    var content = bjscTemplate.TransformText();
+#><#=content#><#
+                                }
+                            }
+                        }
+                    }
+
+                    break;
+                default:
+                    break;
+            }
+    }
+#>

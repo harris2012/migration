@@ -1,0 +1,43 @@
+﻿<#@ template language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Migration</title>
+    <link href="../../theme/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="../../theme/css/bootstrap-theme.min.css" rel="stylesheet" />
+    <link href="../../theme/css/shCore.min.css" rel="stylesheet" />
+    <link href="../../theme/css/shCoreDefault.min.css" rel="stylesheet" />
+    <link href="../../theme/css/migration.min.css" rel="stylesheet" />
+</head>
+<body>
+    <div>
+        <pre class="brush:java">
+<#
+    if(!string.IsNullOrEmpty(this.Code))
+    {
+#>
+<#=this.Code#>
+<#
+    }
+#>
+</pre>
+    </div>
+
+    <script src="../../theme/js/jquery-1.9.1.min.js"></script>
+    <script src="../../theme/js/bootstrap.min.js"></script>
+    <script src="../../theme/js/shCore.min.js"></script>
+    <script src="../../theme/js/shBrushJava.min.js"></script>
+    <script>
+        $(function () {
+            SyntaxHighlighter.highlight();
+        });
+    </script>
+</body>
+</html>
+
