@@ -26,7 +26,6 @@
 <#
                         }
 #>
-@XmlAccessorType(XmlAccessType.FIELD)
 <#=TemplateUtility.GetIndent(this.Indent)#>class <#=classNode.Name#><#=string.IsNullOrEmpty(classNode.BaseTypeName)?string.Empty : string.Concat(" extends ", classNode.BaseTypeName)#> {
 
 <#
@@ -110,7 +109,6 @@
                     if(propertyNode != null)
                     {
 #>
-<#=TemplateUtility.GetIndent(this.Indent)#>@XmlElement(name = "<#=propertyNode.Name??string.Empty#>")
 <#=TemplateUtility.GetIndent(this.Indent)#>private <#=propertyNode.JavaTypeName??string.Empty#> <#=propertyNode.PropertyJavaName#>;<#=string.IsNullOrEmpty(propertyNode.Summary) ? string.Empty : string.Concat("// ", propertyNode.Summary)#>
 
 <#
@@ -189,10 +187,6 @@
                 {
 #>
 package <#=this.Root.Name??string.Empty#>;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
 <#
                     if(this.Root.Items != null && this.Root.Items.Count > 0)
                     {
